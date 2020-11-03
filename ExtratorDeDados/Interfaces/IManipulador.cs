@@ -11,11 +11,22 @@ namespace ExtratorDeDados.Interfaces
         [JsonIgnore]
         T RegistroAtual { get; set; }
         [JsonIgnore]
-        IReadOnlyCollection<ManipuladorComandos> Comandos { get; }
-        IReadOnlyCollection<T> Registros { get; }
+        ICollection<ManipuladorComandos> Comandos { get; }
+        ICollection<T> Registros { get; }
         void ConfigurarMontagemArquivo();
-        void AdicionarComando(Predicate<string> pred, Action<string> metodo, ETipoRegistro novaInstancia);
-        void AdicionarComando(Predicate<string> pred, Action<string> metodo);
+        /// <summary>
+        /// Adiciona um comando a lista de comandos para executar a leitura do arquivo
+        /// </summary>
+        /// <param name="verificaEntidadeLinha">Metodo que analisa os caracteres da linha, e verifica qual o tipo da mesma</param>
+        /// <param name="metodoCapturaDados">Metodo que popula um modelo baseado na linha verificada</param>
+        /// <param name="novaInstancia">Verifica se cria uma nova instancia do Objeto quando o mesmo é do tipo Pai</param>
+        void AdicionarComando(Predicate<string> verificaEntidadeLinha, Action<string> metodoCapturaDados, ETipoRegistro novaInstancia);
+        /// <summary>
+        /// Adiciona um comando a lista de comandos para executar a leitura do arquivo
+        /// </summary>
+        /// <param name="verificaEntidadeLinha">Metodo que analisa os caracteres da linha, e verifica qual o tipo da mesma</param>
+        /// <param name="metodoCapturaDados">Metodo que popula um modelo baseado na linha verificada</param>
+        void AdicionarComando(Predicate<string> verificaEntidadeLinha, Action<string> metodoCapturaDados);
         void AdicionarRegistro();
         void ReiniciaObjeto();
         void ZerarRegistros();

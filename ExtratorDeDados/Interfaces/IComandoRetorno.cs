@@ -1,7 +1,6 @@
-﻿using ExtratorDeDados.Modelos;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+
+using static ExtratorDeDados.Enums.EnumsLeitor;
 
 namespace ExtratorDeDados.Interfaces
 {
@@ -11,7 +10,8 @@ namespace ExtratorDeDados.Interfaces
     }
     public interface IComandoRetorno
     {
-        bool Sucesso { get; set; }
+        EStatus Status { get; set; }
+        bool LeituraRealizada { get; set; }
         List<string> Erros { get; set; }
         List<string> Alertas { get; set; }
         List<string> Informacoes { get; set; }

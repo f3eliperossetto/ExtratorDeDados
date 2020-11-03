@@ -1,7 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <NeutralLanguage>pt-BR</NeutralLanguage>
+    <Authors>Felipe Santana Rossetto</Authors>
+    <Product />
+    <PackageId>ExtratorDeDados</PackageId>
   </PropertyGroup>
 
   <ItemGroup>

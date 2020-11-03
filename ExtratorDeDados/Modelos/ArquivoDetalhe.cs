@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ExtratorDeDados.Modelos
+﻿namespace ExtratorDeDados.Modelos
 {
-   public class ArquivoDetalhe
+    public class ArquivoDetalhe
     {
         public ArquivoDetalhe(string caminhoCompleto)
         {

@@ -1,107 +1,92 @@
 ﻿using ExtratorDeDados.Interfaces;
 using ExtratorDeDados.Interfaces.Implementacoes;
+
+using System;
+using System.IO;
 using System.Linq;
 
 namespace ExtratorDeDados.ModelosServico
 {
-    public  class ExtratorService<T> : IExtratorService<T>
+    public  class ExtratorService<TipoArquivo> : IExtratorService<TipoArquivo>
     {
-        private readonly IManipulador<T> _manipulador;
-        private readonly IProcessamento<T> _processamento;
-        private ExtratorService(IManipulador<T> manipulador)
+        private readonly IManipulador<TipoArquivo> _manipulador;
+        private ExtratorService(IManipulador<TipoArquivo> manipulador)
         {
             _manipulador = manipulador;
         }
-        private ExtratorService(IManipulador<T> manipulador, IProcessamento<T> processamento)
+
+        public IComandoRetorno<IManipulador<TipoArquivo>> CarregarDados(string caminhoArquivo)
         {
-            _manipulador = manipulador;
-            _processamento = processamento;
-        }
-
-        public IComandoRetorno Importar()
-        {
-            IComandoRetorno retorno = new ComandoRetorno();
-
-            foreach (T registro in _manipulador.Registros)
-            {
-                try
-                {
-                    _processamento.ProcessarRegistro(registro);
-                }
-                catch (System.Exception ex)
-                {
-                    retorno.Erros.Add(ex.Message);
-                }
-            }
-
-            return retorno;
-        }
-
-        public IComandoRetorno<IManipulador<T>> CarregarDados(string caminhoArquivo)
-        {
-            IComandoRetorno<IManipulador<T>> resultado = new ComandoRetorno<IManipulador<T>>();
+            IComandoRetorno<IManipulador<TipoArquivo>> resultado = new ComandoRetorno<IManipulador<TipoArquivo>>();
 
             try
             {
-                if (_manipulador.Registros.Count > 0)
-                    _manipulador.ZerarRegistros();
+                if (_manipulador.Registros.Count > 0) _manipulador.ZerarRegistros();
 
-                string[] linhas = System.IO.File.ReadAllLines(caminhoArquivo);
                 int cont = 0;
-                foreach (string linhaArquivo in linhas)
+                foreach (string linhaArquivo in File.ReadAllLines(caminhoArquivo))
                 {
-                    foreach (ManipuladorComandos comando in _manipulador.Comandos)
+                    var comando = _manipulador.Comandos.FirstOrDefault(cmd => cmd.Condicao(linhaArquivo));
+                    if (comando != null)
                     {
-                        if (comando.Condicao(linhaArquivo))
+                        try
                         {
-                            try
+                            if (comando.Tipo == Enums.EnumsLeitor.ETipoRegistro.ObjetoPai)
                             {
-                                if (comando.Tipo == Enums.EnumsLeitor.ETipoRegistro.ObjetoPai)
-                                {
-                                    _manipulador.ReiniciaObjeto();
-                                    _manipulador.AdicionarRegistro();
-                                }
-                                comando.PopulaObjeto(linhaArquivo);
+                                _manipulador.ReiniciaObjeto();
+                                _manipulador.AdicionarRegistro();
                             }
-                            catch (System.Exception ex)
-                            {
-                                resultado.Erros.Add($"Erro ao Capturar a linha:{cont}-{linhaArquivo}  Detalhes Erro: {ex.Message}");
-                            }
+                            comando.PopulaObjeto(linhaArquivo);
                         }
+                        catch (System.Exception ex)
+                        {
+                            resultado.Erros.Add($"Erro ao Capturar a linha:{cont} - {linhaArquivo}  Detalhes Erro: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        resultado.Alertas.Add($"Linha {cont} - {linhaArquivo}, não mapeada para nenhum modelo");
                     }
                     cont++;
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 resultado.Erros.Add(ex.Message);
             }
 
-            if (resultado.Erros.Count == 0 && resultado.Alertas.Count == 0)
+           return ConfiguraStatusFinal(resultado);
+        }
+
+        private IComandoRetorno<IManipulador<TipoArquivo>> ConfiguraStatusFinal(IComandoRetorno<IManipulador<TipoArquivo>> resultado)
+        {
+            if (!resultado.Erros.Any() && !resultado.Alertas.Any())
             {
-                resultado.Sucesso = true;
+                resultado.Status = Enums.EnumsLeitor.EStatus.Sucesso;
+                resultado.LeituraRealizada = true;
                 resultado.Informacoes.Add("Arquivo lido com sucesso!");
             }
+            else if (!resultado.Erros.Any() && resultado.Alertas.Any())
+            {
+                resultado.Status = Enums.EnumsLeitor.EStatus.ComAlertas;
+                resultado.LeituraRealizada = true;
+                resultado.Informacoes.Add("Arquivo lido com alertas!");
+            }
             else
-                resultado.Sucesso = false;
-
-
+            {
+                resultado.LeituraRealizada = false;
+                resultado.Status = Enums.EnumsLeitor.EStatus.Erro;
+            }
 
             resultado.Retorno = _manipulador;
-
             return resultado;
         }
 
-
         public static class ExtratorServiceFactory
         {
-            public static ExtratorService<T> ObterSomenteLeitura(IManipulador<T> manipulador)
+            public static IExtratorService<TipoArquivo> ObterServico<TipoServico>() where TipoServico : IManipulador<TipoArquivo>
             {
-                return new ExtratorService<T>(manipulador);
-            }
-            public static ExtratorService<T> ObterLeoturaImportacao(IManipulador<T> manipulador, IProcessamento<T> processamento)
-            {
-                return new ExtratorService<T>(manipulador, processamento);
+                return new ExtratorService<TipoArquivo>(Activator.CreateInstance<TipoServico>());
             }
         }
     }

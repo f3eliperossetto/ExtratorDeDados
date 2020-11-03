@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ExtratorDeDados.Enums
+﻿namespace ExtratorDeDados.Enums
 {
-   public class EnumsLeitor
+    public class EnumsLeitor
     {
-        public enum EStatusImportacao
+        public enum EStatus
         {
-            Nao_Importado,
-            Importado,
-            ImportadoComErro,
-            EmAndamento
+            Sucesso,
+            ComAlertas,
+            Erro
         }
 
         public enum ETipoRegistro
